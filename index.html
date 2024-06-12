@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Absensi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 98%;
+            margin: auto;
+            overflow: hidden;
+            max-width: 1200px;
+        }
+        header {
+            background: #35424a;
+            color: #ffffff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #e8491d 3px solid;
+        }
+        header h1 {
+            text-align: center;
+            margin: 0;
+            text-transform: uppercase;
+            font-size: 24px;
+        }
+        form {
+            background: #ffffff;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="date"],
+        input[type="radio"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .radio-group label {
+            display: flex;   
+            margin-bottom: 1px;
+        }
+        .radio-group input[type="radio"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            background: #35424a;
+            color: #ffffff;
+            border: 0;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #e8491d;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #35424a;
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Input Absensi</h1>
+    </header>
+    <form id="attendanceForm">
+        <label for="date">Tanggal:</label>
+        <input type="date" id="date" name="date" required>
+        
+        <label for="name">Nama:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="id">Nomor ID:</label>
+        <input type="text" id="id" name="id" required>
+        
+        <label for="work">Jam Kerja / Keterangan:</label>
+        <div class="radio-group" id="work">
+            <label><input type="radio" name="work" value="siang" required> Shift Siang</label>
+            <label><input type="radio" name="work" value="malam" required> Shift Malam</label>
+            <label><input type="radio" name="work" value="Off" required> Off</label>
+            <label><input type="radio" name="work" value="Sakit" required> Sakit</label>
+            <label><input type="radio" name="work" value="Izin" required> Izin</label>
+            <label><input type="radio" name="work" value="Cuti" required> Cuti</label>
+        </div>
+        
+        <div class="button-container">
+            <button type="submit">Submit</button>
+            <button type="button" onclick="window.location.href='results.html'">Lihat Hasil</button>
+        </div>
+    </form>
+</div>
+
+<footer>
+    <p>&copy; 2024 Absensi</p>
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBVCXqlS_EmR94n5CyN4N2BC-kgJb6Xac4",
+        authDomain: "absenacid.firebaseapp.com",
+        databaseURL: "https://absenacid-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "absenacid",
+        storageBucket: "absenacid.appspot.com",
+        messagingSenderId: "69425925570",
+        appId: "1:69425925570:web:3cc94c0dff5aad08bcda5b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const attendanceForm = document.getElementById('attendanceForm');
+    attendanceForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const date = document.getElementById('date').value;
+        const name = document.getElementById('name').value;
+        const id = document.getElementById('id').value;
+        const work = document.querySelector('input[name="work"]:checked').value;
+
+        push(ref(db, 'attendance/'), {
+            date,
+            name,
+            id,
+            work
+        }).then(() => {
+            alert('Data berhasil disimpan!');
+            attendanceForm.reset();
+        }).catch((error) => {
+            console.error('Error writing new attendance to Firebase Database', error);
+        });
+    });
+</script>
+
+</body>
+</html>
