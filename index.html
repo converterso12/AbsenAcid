@@ -55,7 +55,7 @@
             flex-direction: column;
         }
         .radio-group label {
-            display: flex;   
+            display: flex;
             margin-bottom: 1px;
         }
         .radio-group input[type="radio"] {
@@ -83,6 +83,24 @@
             background: #35424a;
             color: white;
             margin-top: 20px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            text-align: center;
+        }
+        .popup.active {
+            display: block;
+        }
+        .popup p {
+            margin: 0 0 10px;
         }
     </style>
 </head>
@@ -119,6 +137,10 @@
     </form>
 </div>
 
+<div id="popup" class="popup">
+    <p id="popupMessage">Sedang memproses...</p>
+</div>
+
 <footer>
     <p>&copy; 2024 Absensi</p>
 </footer>
@@ -139,28 +161,91 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    
+     const allowedLocation = {
+        latitude: -2.8559667,  // Latitude dari tautan yang diberikan
+        longitude: 122.1763768 // Longitude dari tautan yang diberikan
+    };
 
     const attendanceForm = document.getElementById('attendanceForm');
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popupMessage');
+
     attendanceForm.addEventListener('submit', (e) => {
         e.preventDefault();
+
+        popup.classList.add('active');
+        popupMessage.textContent = 'Sedang memproses...';
 
         const date = document.getElementById('date').value;
         const name = document.getElementById('name').value;
         const id = document.getElementById('id').value;
         const work = document.querySelector('input[name="work"]:checked').value;
 
-        push(ref(db, 'attendance/'), {
-            date,
-            name,
-            id,
-            work
-        }).then(() => {
-            alert('Data berhasil disimpan!');
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const userLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                const distance = getDistance(userLocation, allowedLocation);
+                console.log(`User Location: ${userLocation.latitude}, ${userLocation.longitude}`);
+                console.log(`Allowed Location: ${allowedLocation.latitude}, ${allowedLocation.longitude}`);
+                console.log(`Distance: ${distance} meters`);
+
+                if ((work === 'siang' || work === 'malam') && distance > 200) { // Contoh: batas jarak 100 meter
+                    popupMessage.textContent = 'Anda tidak berada di lokasi yang diizinkan untuk absen shift ini.';
+                    setTimeout(() => {
+                        popup.classList.remove('active');
+                    }, 3000);
+                } else {
+                    submitAttendance({ date, name, id, work });
+                }
+            }, () => {
+                popupMessage.textContent = 'Tidak dapat memperoleh lokasi Anda.';
+                setTimeout(() => {
+                    popup.classList.remove('active');
+                }, 3000);
+            });
+        } else {
+            popupMessage.textContent = 'Geolocation tidak didukung oleh browser ini.';
+            setTimeout(() => {
+                popup.classList.remove('active');
+            }, 3000);
+        }
+    });
+
+    function submitAttendance(data) {
+        push(ref(db, 'attendance/'), data).then(() => {
+            popupMessage.textContent = 'Data berhasil disimpan!';
             attendanceForm.reset();
+            setTimeout(() => {
+                popup.classList.remove('active');
+            }, 3000);
         }).catch((error) => {
             console.error('Error writing new attendance to Firebase Database', error);
+            popupMessage.textContent = 'Terjadi kesalahan dalam menyimpan data.';
+            setTimeout(() => {
+                popup.classList.remove('active');
+            }, 3000);
         });
-    });
+    }
+
+    function getDistance(location1, location2) {
+        const R = 6371e3; // metres
+        const φ1 = location1.latitude * Math.PI/180; // φ, λ in radians
+        const φ2 = location2.latitude * Math.PI/180;
+        const Δφ = (location2.latitude - location1.latitude) * Math.PI/180;
+        const Δλ = (location2.longitude - location1.longitude) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        const distance = R * c; // in metres
+        return distance;
+    }
 </script>
 
 </body>
