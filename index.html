@@ -55,7 +55,7 @@
             flex-direction: column;
         }
         .radio-group label {
-            display: flex;   
+            display: flex;
             margin-bottom: 1px;
         }
         .radio-group input[type="radio"] {
@@ -114,13 +114,13 @@
         
         <div class="button-container">
             <button type="submit">Submit</button>
-            <button type="button" onclick="window.location.href='results.html'">Lihat Hasil</button>
+            <button type="button" onclick="verifyCode()">Lihat Hasil</button>
         </div>
     </form>
 </div>
 
 <footer>
-    <p>&copy; 2024 Absensi</p>
+    <p>&copy; 2024 Absensi Acid Plant MTI</p>
 </footer>
 
 <script type="module">
@@ -161,6 +161,17 @@
             console.error('Error writing new attendance to Firebase Database', error);
         });
     });
+
+    window.verifyCode = function() {
+        const code = prompt('Halaman ini hanya boleh diakses oleh admin untuk keperluan rekapitulasi timesheet. Masukkan kode verifikasi:');
+        const correctCode = '0000';  // Ubah kode ini sesuai dengan keperluan
+
+        if (code === correctCode) {
+            window.location.href = 'results.html';
+        } else {
+            alert('Kode verifikasi salah!');
+        }
+    }
 </script>
 
 </body>
