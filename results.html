@@ -63,7 +63,12 @@
     const deleteButton = document.getElementById('delete-button');
     const filterMonthInput = document.getElementById('filter-month');
     const filterNameSelect = document.getElementById('filter-name');
-    const selectAllCheckbox = document.getElementById('select-all');
+
+    const toTitleCase = (str) => {
+        return str.replace(/\w\S*/g, (txt) => {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    };
 
     const getDaysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
 
@@ -78,11 +83,11 @@
                 const dateObj = new Date(data.date);
                 const dataMonth = dateObj.getMonth();
                 const dataYear = dateObj.getFullYear();
-                const dataName = data.name;
+                const dataName = toTitleCase(data.name);
 
                 if (dataMonth === month && dataYear === year && (nameFilter === '' || dataName === nameFilter)) {
                     const day = dateObj.getDate();
-                    dataByDate[day] = { ...data, key: childSnapshot.key };
+                    dataByDate[day] = { ...data, name: dataName, key: childSnapshot.key };
                 }
             });
 
@@ -94,9 +99,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>
-            <input type="checkbox" id="select-all"> Pilih Semua
-        </th>
+                            <th><input type="checkbox" id="select-all"> Pilih Semua</th>
                             <th>No</th>
                             <th>Tanggal</th>
                             <th>Nomor ID</th>
@@ -164,7 +167,7 @@
                 </table>
             `;
             tablesContainer.appendChild(monthTable);
-            
+
             const selectAllCheckbox = document.getElementById('select-all');
 
             // Event listener for select-all checkbox
@@ -186,7 +189,7 @@
                 const dateObj = new Date(data.date);
                 const dataMonth = dateObj.getMonth();
                 const dataYear = dateObj.getFullYear();
-                const dataName = data.name;
+                const dataName = toTitleCase(data.name);
 
                 if (dataMonth === month && dataYear === year) {
                     if (!dataByName[dataName]) {
@@ -234,7 +237,7 @@
                     }
 
                     return {
-                        No:day,
+                        No: day,
                         Tanggal: formattedDate,
                         'Nomor ID': entry.id || '',
                         Nama: entry.name || name,
@@ -251,7 +254,7 @@
                     { wch: 5 },  // No
                     { wch: 20 }, // Tanggal
                     { wch: 15 }, // Nomor ID
-                    { wch: 15 }, // Nama
+                    { wch: 40 }, // Nama
                     { wch: 10 }, // Attendance
                     { wch: 20 }, // Working Hour (Start)
                     { wch: 20 }, // Working Hour (Finish)
@@ -306,8 +309,8 @@
         let lastName = '';
         snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
-            namesSet.add(data.name);
-            lastName = data.name; // Set lastName to the name of the last entry
+            namesSet.add(toTitleCase(data.name));
+            lastName = toTitleCase(data.name); // Set lastName to the name of the last entry
         });
 
         const namesArray = Array.from(namesSet);
@@ -337,4 +340,4 @@
     deleteButton.addEventListener('click', deleteSelectedData);
 </script>
 </body>
-</html>
+    </html>
