@@ -73,23 +73,23 @@
     const getDaysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
 
     const loadAttendanceData = (month, year, nameFilter = '') => {
-        onValue(ref(db, 'attendance/'), (snapshot) => {
-            tablesContainer.innerHTML = '';
-            const daysInMonth = getDaysInMonth(month, year);
-            const dataByDate = {};
+    onValue(ref(db, 'attendance/'), (snapshot) => {
+        tablesContainer.innerHTML = '';
+        const daysInMonth = getDaysInMonth(month, year);
+        const dataByDate = {};
 
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                const dateObj = new Date(data.date);
-                const dataMonth = dateObj.getMonth();
-                const dataYear = dateObj.getFullYear();
-                const dataName = toTitleCase(data.name);
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            const dateObj = new Date(data.date);
+            const dataMonth = dateObj.getMonth();
+            const dataYear = dateObj.getFullYear();
+            const dataName = toTitleCase(data.name.trim()); // Trim the name
 
-                if (dataMonth === month && dataYear === year && (nameFilter === '' || dataName === nameFilter)) {
-                    const day = dateObj.getDate();
-                    dataByDate[day] = { ...data, name: dataName, key: childSnapshot.key };
-                }
-            });
+            if (dataMonth === month && dataYear === year && (nameFilter === '' || dataName === nameFilter.trim())) {
+                const day = dateObj.getDate();
+                dataByDate[day] = { ...data, name: dataName, key: childSnapshot.key };
+            }
+        });
 
             const monthYear = new Date(year, month).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
             const monthTable = document.createElement('div');
@@ -179,26 +179,25 @@
     };
 
     const exportToExcel = (month, year) => {
-        onValue(ref(db, 'attendance/'), (snapshot) => {
-            const workbook = XLSX.utils.book_new();
-            const daysInMonth = getDaysInMonth(month, year);
-            const dataByName = {};
+    onValue(ref(db, 'attendance/'), (snapshot) => {
+        const workbook = XLSX.utils.book_new();
+        const daysInMonth = getDaysInMonth(month, year);
+        const dataByName = {};
 
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                const dateObj = new Date(data.date);
-                const dataMonth = dateObj.getMonth();
-                const dataYear = dateObj.getFullYear();
-                const dataName = toTitleCase(data.name);
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            const dateObj = new Date(data.date);
+            const dataMonth = dateObj.getMonth();
+            const dataYear = dateObj.getFullYear();
+            const dataName = toTitleCase(data.name.trim()); // Trim the name
 
-                if (dataMonth === month && dataYear === year) {
-                    if (!dataByName[dataName]) {
-                        dataByName[dataName] = [];
-                    }
-                    dataByName[dataName].push(data);
+            if (dataMonth === month && dataYear === year) {
+                if (!dataByName[dataName]) {
+                    dataByName[dataName] = [];
                 }
-            });
-
+                dataByName[dataName].push(data);
+            }
+        });
             for (const name in dataByName) {
                 const data = Array.from({ length: daysInMonth }, (_, index) => {
                     const day = index + 1;
@@ -305,22 +304,21 @@
 
     // Populate the names dropdown and set default to the last one
     onValue(ref(db, 'attendance/'), (snapshot) => {
-        const namesSet = new Set();
-        let lastName = '';
-        snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            namesSet.add(toTitleCase(data.name));
-            lastName = toTitleCase(data.name); // Set lastName to the name of the last entry
-        });
-
-        const namesArray = Array.from(namesSet);
-        const sortedNames = namesArray.sort((a, b) => a.localeCompare(b));
-        filterNameSelect.innerHTML = sortedNames.map(name => `<option value="${name}">${name}</option>`).join('');
-
-        // Set the default value to the last name and load data for that name
-        filterNameSelect.value = lastName;
-        loadAttendanceData(currentMonth, currentYear, lastName);
+    onValue(ref(db, 'attendance/'), (snapshot) => {
+    const namesSet = new Set();
+    let lastName = '';
+    snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        namesSet.add(toTitleCase(data.name.trim())); // Trim the name
+        lastName = toTitleCase(data.name.trim()); // Trim the name
     });
+
+    const sortedNames = Array.from(namesSet).sort((a, b) => a.localeCompare(b));
+    filterNameSelect.innerHTML = sortedNames.map(name => `<option value="${name}">${name}</option>`).join('');
+
+    filterNameSelect.value = lastName;
+    loadAttendanceData(currentMonth, currentYear, lastName);
+});
 
     filterButton.addEventListener('click', () => {
         const selectedDate = new Date(filterMonthInput.value);
