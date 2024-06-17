@@ -187,85 +187,6 @@
         snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
             const dateObj = new Date(data.date);
-            const dataMonth = dateObj.getMonth();
-            const dataYear = dateObj.getFullYear();
-            const dataName = toTitleCase(data.name.trim()); // Trim the name
-
-            if (dataMonth === month && dataYear === year) {
-                if (!dataByName[dataName]) {
-                    dataByName[dataName] = [];
-                }
-                dataByName[dataName].push(data);
-            }
-        }); 
-
-            for (const name in dataByName) {
-                const data = Array.from({ length: daysInMonth }, (_, index) => {
-                    const day = index + 1;
-                    const dateObj = new Date(year, month, day);
-                    const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
-                    const formattedDate = dateObj.toLocaleDateString('id-ID', options);
-                    const entry = dataByName[name].find(d => new Date(d.date).getDate() === day) || {};
-
-                    let attendance = '';
-                    let startHour = '';
-                    let finishHour = '';
-                    let totalOvertime = '';
-                    let remarks = '';
-
-                    if (entry.work) {
-                        if (['Hadir', 'siang', 'malam'].includes(entry.work)) {
-                            if (entry.work === 'siang') {
-                                attendance = '1';
-                                startHour = '5';
-                                finishHour = '17';
-                                remarks = 'Day Shift';
-                            } else if (entry.work === 'malam') {
-                                attendance = '2';
-                                startHour = '17';
-                                finishHour = '5';
-                                remarks = 'Night Shift';
-                            }
-                            const workHours = 11;
-                            const overtime = workHours - 8;
-                            const dayOfWeek = dateObj.getDay();
-                            const isWeekendOrHoliday = dayOfWeek === 0 || dayOfWeek === 6;
-                            totalOvertime = isWeekendOrHoliday ? workHours : overtime;
-                        } else {
-                            attendance = entry.work;
-                        }
-                    }
-
-                    return {
-                        No: day,
-                        Tanggal: formattedDate,
-                        'Nomor ID': entry.id || '',
-                        Nama: entry.name || name,
-                        Attendance: attendance,
-                        'Working (Start)': startHour,
-                        'Working (Finish)': finishHour,
-                        'Total Overtime': totalOvertime,
-                        Remarks: remarks
-                    };
-                });
-
-                const worksheet = XLSX.utils.json_to_sheet(data);
-                const wscols = [
-                    { wch: 5 } ,  // No
-                    { wch: 20 }, // Tanggal
-                    { wch: 15 }, // Nomor ID
-                    { wch: 40 }, // Nama
-                    { wch: 10 }, // Attendance
-                    { wch: 20 }, // Working Hour (Start)
-const exportToExcel = (month, year) => {
-    onValue(ref(db, 'attendance/'), (snapshot) => {
-        const workbook = XLSX.utils.book_new();
-        const daysInMonth = getDaysInMonth(month, year);
-        const dataByName = {};
-
-        snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            const dateObj = new Date(data.date);
 
             // Check if the date is valid
             if (isNaN(dateObj.getTime())) {
@@ -360,6 +281,7 @@ const exportToExcel = (month, year) => {
         XLSX.writeFile(workbook, `Absensi_${year}_${String(month + 1).padStart(2, '0')}.xlsx`);
     });
 };
+
     const deleteSelectedData = () => {
         const selectedKeys = [];
         const checkboxes = document.querySelectorAll('.select-row:checked');
