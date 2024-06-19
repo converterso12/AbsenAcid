@@ -8,7 +8,7 @@
             margin-bottom: 20px;
         }
 
-        .form-container label, .form-container select, .form-container input[type="month"], .form-container button {
+        .form-container label, .form-container select, .form-container input[type="month"], .form-container input[type="date"], .form-container button {
             margin: 5px;
             font-size: 16px;
             padding: 8px;
@@ -104,7 +104,7 @@
                 align-items: stretch;
             }
 
-            .form-container label, .form-container select, .form-container input[type="month"], .form-container button {
+            .form-container label, .form-container select, .form-container input[type="month"], .form-container input[type="date"], .form-container button {
                 margin: 5px 0;
                 width: 100%;
             }
