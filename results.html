@@ -24,12 +24,12 @@
 
         
 
-        <button id="filter-button">Tampilkan Data Bulanan</button>
+        <button id="filter-button">Tampilkan</button>
         <button id="export-button">Ekspor ke Excel</button>
         
         <label for="filter-date">Tanggal:</label>
         <input type="date" id="filter-date">
-        <button id="filter-date-button">Tampilkan Data Tanggal</button>
+        <button id="filter-date-button">Tampilkan</button>
         
         <button id="delete-button">Hapus Data Terpilih</button>
     </div>
@@ -185,135 +185,97 @@
     };
 
     const loadAttendanceDataByDate = (selectedDate) => {
-        onValue(ref(db, 'attendance/'), (snapshot) => {
-            tablesContainer.innerHTML = '';
-            const dataSiang = [];
-            const dataMalam = [];
+    onValue(ref(db, 'attendance/'), (snapshot) => {
+        tablesContainer.innerHTML = '';
+        const dataSiang = {};
+        const dataMalam = {};
 
-            snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                const dateObj = new Date(data.date);
-                const dataDate = dateObj.toISOString().split('T')[0];
-                const dataName = toTitleCase(data.name.trim());
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            const dateObj = new Date(data.date);
+            const dataDate = dateObj.toISOString().split('T')[0];
+            const dataName = toTitleCase(data.name.trim());
 
-                if (dataDate === selectedDate) {
-                    if (data.work === 'siang') {
-                        dataSiang.push({ ...data, name: dataName, key: childSnapshot.key });
-                    } else if (data.work === 'malam') {
-                        dataMalam.push({ ...data, name: dataName, key: childSnapshot.key });
-                    }
+            if (dataDate === selectedDate) {
+                const key = childSnapshot.key;
+                if (data.work === 'siang') {
+                    dataSiang[dataName] = { ...data, name: dataName, key };
+                } else if (data.work === 'malam') {
+                    dataMalam[dataName] = { ...data, name: dataName, key };
                 }
-            });
-
-            const date = new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            const tableSiang = document.createElement('div');
-            tableSiang.classList.add('table-container');
-            tableSiang.innerHTML = `
-                <h2>Shift Siang (${date})</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all-siang"> Pilih Semua</th>
-                            <th>No</th>
-                            <th>Nomor ID</th>
-                            <th>Nama</th>
-                            <th>Working (Start)</th>
-                            <th>Working (Finish)</th>
-                            <th>Total Overtime</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${dataSiang.map((data, index) => {
-                            const startHour = '5';
-                            const finishHour = '17';
-                            const workHours = 11;
-                            const overtime = workHours - 8;
-                            const dateObj = new Date(selectedDate);
-                            const dayOfWeek = dateObj.getDay();
-                            const isWeekendOrHoliday = dayOfWeek === 0 || dayOfWeek === 6;
-                            const totalOvertime = isWeekendOrHoliday ? workHours : overtime;
-                            const remarks = 'Day Shift';
-
-                            return `
-                                <tr>
-                                    <td><input type="checkbox" class="select-row-siang" data-key="${data.key || ''}"></td>
-                                    <td>${index + 1}</td>
-                                    <td>${data.id || ''}</td>
-                                    <td>${data.name || ''}</td>
-                                    <td>${startHour}</td>
-                                    <td>${finishHour}</td>
-                                    <td>${totalOvertime}</td>
-                                    <td>${remarks}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-            tablesContainer.appendChild(tableSiang);
-
-            const tableMalam = document.createElement('div');
-            tableMalam.classList.add('table-container');
-            tableMalam.innerHTML = `
-                <h2>Shift Malam (${date})</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all-malam"> Pilih Semua</th>
-                            <th>No</th>
-                            <th>Nomor ID</th>
-                            <th>Nama</th>
-                            <th>Working (Start)</th>
-                            <th>Working (Finish)</th>
-                            <th>Total Overtime</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${dataMalam.map((data, index) => {
-                            const startHour = '17';
-                            const finishHour = '5';
-                            const workHours = 11;
-                            const overtime = workHours - 8;
-                            const dateObj = new Date(selectedDate);
-                            const dayOfWeek = dateObj.getDay();
-                            const isWeekendOrHoliday = dayOfWeek === 0 || dayOfWeek === 6;
-                            const totalOvertime = isWeekendOrHoliday ? workHours : overtime;
-                            const remarks = 'Night Shift';
-
-                            return `
-                                <tr>
-                                    <td><input type="checkbox" class="select-row-malam" data-key="${data.key || ''}"></td>
-                                    <td>${index + 1}</td>
-                                    <td>${data.id || ''}</td>
-                                    <td>${data.name || ''}</td>
-                                    <td>${startHour}</td>
-                                    <td>${finishHour}</td>
-                                    <td>${totalOvertime}</td>
-                                    <td>${remarks}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-            tablesContainer.appendChild(tableMalam);
-
-            const selectAllCheckboxSiang = document.getElementById('select-all-siang');
-            selectAllCheckboxSiang.addEventListener('change', () => {
-                const checkboxes = document.querySelectorAll('.select-row-siang');
-                checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckboxSiang.checked);
-            });
-
-            const selectAllCheckboxMalam = document.getElementById('select-all-malam');
-            selectAllCheckboxMalam.addEventListener('change', () => {
-                const checkboxes = document.querySelectorAll('.select-row-malam');
-                checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckboxMalam.checked);
-            });
+            }
         });
-    };
+
+        const date = new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        const createTable = (shiftData, shiftName) => {
+            const tableContainer = document.createElement('div');
+            tableContainer.classList.add('table-container');
+            tableContainer.innerHTML = `
+                <h2>Shift ${shiftName} (${date})</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all-${shiftName.toLowerCase()}"> Pilih Semua</th>
+                            <th>No</th>
+                            <th>Nomor ID</th>
+                            <th>Nama</th>
+                            <th>Working (Start)</th>
+                            <th>Working (Finish)</th>
+                            <th>Total Overtime</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.values(shiftData).map((data, index) => {
+                            const startHour = shiftName === 'Siang' ? '5' : '17';
+                            const finishHour = shiftName === 'Siang' ? '17' : '5';
+                            const workHours = 11;
+                            const overtime = workHours - 8;
+                            const dateObj = new Date(selectedDate);
+                            const dayOfWeek = dateObj.getDay();
+                            const isWeekendOrHoliday = dayOfWeek === 0 || dayOfWeek === 6;
+                            const totalOvertime = isWeekendOrHoliday ? workHours : overtime;
+                            const remarks = shiftName === 'Siang' ? 'Day Shift' : 'Night Shift';
+
+                            return `
+                                <tr>
+                                    <td><input type="checkbox" class="select-row-${shiftName.toLowerCase()}" data-key="${data.key || ''}"></td>
+                                    <td>${index + 1}</td>
+                                    <td>${data.id || ''}</td>
+                                    <td>${data.name || ''}</td>
+                                    <td>${startHour}</td>
+                                    <td>${finishHour}</td>
+                                    <td>${totalOvertime}</td>
+                                    <td>${remarks}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            return tableContainer;
+        };
+
+        const tableSiang = createTable(dataSiang, 'Siang');
+        const tableMalam = createTable(dataMalam, 'Malam');
+        
+        tablesContainer.appendChild(tableSiang);
+        tablesContainer.appendChild(tableMalam);
+
+        const selectAllCheckboxSiang = document.getElementById('select-all-siang');
+        selectAllCheckboxSiang.addEventListener('change', () => {
+            const checkboxes = document.querySelectorAll('.select-row-siang');
+            checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckboxSiang.checked);
+        });
+
+        const selectAllCheckboxMalam = document.getElementById('select-all-malam');
+        selectAllCheckboxMalam.addEventListener('change', () => {
+            const checkboxes = document.querySelectorAll('.select-row-malam');
+            checkboxes.forEach(checkbox => checkbox.checked = selectAllCheckboxMalam.checked);
+        });
+    });
+};
 
     const exportToExcel = (month, year) => {
         onValue(ref(db, 'attendance/'), (snapshot) => {
