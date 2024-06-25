@@ -383,7 +383,7 @@
 
     const deleteSelectedData = () => {
         const selectedKeys = [];
-        const checkboxes = document.querySelectorAll('.select-row-siang:checked, .select-row-malam:checked');
+        const checkboxes = document.querySelectorAll('.select-row-siang:checked, .select-row-malam:checked, .select-row:checked');
         checkboxes.forEach(checkbox => {
             const key = checkbox.getAttribute('data-key');
             if (key) {
