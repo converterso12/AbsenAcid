@@ -7,6 +7,13 @@
             align-items: center;
             margin-bottom: 20px;
         }
+        .admin-notice {
+            background-color: #e8491d;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-top: 20px;
+        }
 
         .form-container label, .form-container select, .form-container input[type="month"], .form-container input[type="date"], .form-container button {
             margin: 5px;
