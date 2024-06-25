@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasil Absensi</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style1.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Hasil Absensi</h1>
+    </header>
+
+    <div class="form-container">
+        <label for="filter-month">Bulan:</label>
+        <input type="month" id="filter-month">
+
+        <label for="filter-name">Nama:</label>
+        <select id="filter-name">
+            <option value="">Pilih Nama</option>
+            <!-- Options for names will be populated dynamically -->
+        </select>
+
+        <button id="filter-button">Tampilkan</button>
+    </div>
+
+    <div id="tables-container"></div>
+
+    <div class="button-container">
+        <button onclick="location.href='index.html'">Kembali ke Input Absen</button>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2024 Absensi</p>
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBVCXqlS_EmR94n5CyN4N2BC-kgJb6Xac4",
+        authDomain: "absenacid.firebaseapp.com",
+        databaseURL: "https://absenacid-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "absenacid",
+        storageBucket: "absenacid.appspot.com",
+        messagingSenderId: "69425925570",
+        appId: "1:69425925570:web:3cc94c0dff5aad08bcda5b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const tablesContainer = document.getElementById('tables-container');
+    const filterButton = document.getElementById('filter-button');
+    const filterMonthInput = document.getElementById('filter-month');
+    const filterNameSelect = document.getElementById('filter-name');
+
+    const toTitleCase = (str) => {
+        return str.replace(/\w\S*/g, (txt) => {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    };
+
+    const getDaysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
+
+    const loadAttendanceData = (month, year, nameFilter = '') => {
+        onValue(ref(db, 'attendance/'), (snapshot) => {
+            tablesContainer.innerHTML = '';
+            const daysInMonth = getDaysInMonth(month, year);
+            const dataByDate = {};
+
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                const dateObj = new Date(data.date);
+                const dataMonth = dateObj.getMonth();
+                const dataYear = dateObj.getFullYear();
+                const dataName = toTitleCase(data.name.trim());
+
+                if (dataMonth === month && dataYear === year && (nameFilter === '' || dataName === nameFilter.trim())) {
+                    const day = dateObj.getDate();
+                    dataByDate[day] = { ...data, name: dataName, key: childSnapshot.key };
+                }
+            });
+
+            const monthYear = new Date(year, month).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+            const monthTable = document.createElement('div');
+            monthTable.classList.add('table-container');
+            monthTable.innerHTML = `
+                <h2>Daftar Absen ${monthYear}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Tanggal</th>
+                            <th>Nomor ID</th>
+                            <th>Nama</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array.from({ length: daysInMonth }, (_, index) => {
+                            const day = index + 1;
+                            const data = dataByDate[day] || {};
+                            const dateObj = new Date(year, month, day);
+                            const options = { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' };
+                            const formattedDate = dateObj.toLocaleDateString('id-ID', options);
+
+                            let remarks = '';
+
+                            if (data.work) {
+                                if (['siang', 'malam'].includes(data.work)) {
+                                    if (data.work === 'siang') {
+                                        remarks = 'Day Shift';
+                                    } else if (data.work === 'malam') {
+                                        remarks = 'Night Shift';
+                                    }
+                                } else {
+                                    remarks = data.work;
+                                }
+                            }
+
+                            return `
+                                <tr>
+                                    <td>${day}</td>
+                                    <td>${formattedDate}</td>
+                                    <td>${data.id || ''}</td>
+                                    <td>${data.name || ''}</td>
+                                    <td>${remarks}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            tablesContainer.appendChild(monthTable);
+        });
+    };
+
+    // Load current month data on page load
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    filterMonthInput.value = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+
+    // Populate the names dropdown and set default to the last one
+    onValue(ref(db, 'attendance/'), (snapshot) => {
+        const namesSet = new Set();
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            namesSet.add(toTitleCase(data.name.trim()));
+        });
+
+        const sortedNames = Array.from(namesSet).sort((a, b) => a.localeCompare(b));
+        filterNameSelect.innerHTML = `<option value="">Pilih Nama</option>` + sortedNames.map(name => `<option value="${name}">${name}</option>`).join('');
+    });
+
+    filterButton.addEventListener('click', () => {
+        const [year, month] = filterMonthInput.value.split('-').map(Number);
+        const selectedName = filterNameSelect.value;
+        if (selectedName) {
+            loadAttendanceData(month - 1, year, selectedName);
+        } else {
+            alert('Silakan pilih nama.');
+        }
+    });
+</script>
+</body>
+</html>
