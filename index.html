@@ -3,198 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Absensi</title>
-    <link rel="stylesheet" href="style2.css">
+    <title>Perhitungan Kadar SO2</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        select {
+            appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+            background-color: #fff;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #result {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-
-<div class="container">
-    <header>
-        <h1>Absensi Acid Plant</h1>
-    </header>
-    <div class="admin-perhatian">
-        PERHATIAN: JANGAN LUPA MENGAKTIFKAN LAYANAN LOKASI UNTUK BROWSER BAIK PADA PERANGKAT ANDROID ATAU IPHONE.
+    <div class="container">
+        <h1>Perhitungan Kadar SO2</h1>
+        <form id="constantsForm">
+            <label for="c">Nilai C:</label>
+            <input type="number" id="c">
+            <label for="v">Nilai V (ml):</label>
+            <input type="number" id="v">
+            <label for="temperature">Temperatur (°C):</label>
+            <select id="temperature">
+                <option value="0.884">25°C (Pt: 0.884)</option>
+                <option value="0.879">26°C (Pt: 0.879)</option>
+                <option value="0.874">27°C (Pt: 0.874)</option>
+                <option value="0.870">28°C (Pt: 0.870)</option>
+                <option value="0.865">29°C (Pt: 0.865)</option>
+                <option value="0.860">30°C (Pt: 0.860)</option>
+                <option value="0.855">31°C (Pt: 0.855)</option>
+                <option value="0.850">32°C (Pt: 0.850)</option>
+                <option value="0.844">33°C (Pt: 0.844)</option>
+                <option value="0.839">34°C (Pt: 0.839)</option>
+                <option value="0.834">35°C (Pt: 0.834)</option>
+            </select>
+            <button type="button" onclick="saveConstants()">Simpan Konstanta</button>
+        </form>
+        <form id="calculationForm">
+            <label for="location">Lokasi Pengambilan Sampel:</label>
+            <select id="location">
+                <option value="Outlet SO2 blower">Outlet SO2 blower</option>
+                <option value="Converter Layer 1">Converter Layer 1</option>
+                <option value="Converter Layer 2">Converter Layer 2</option>
+                <option value="Converter Layer 3">Converter Layer 3</option>
+                <option value="Converter Layer 4">Converter Layer 4</option>
+            </select>
+            <label for="sampler">Sampler:</label>
+            <input type="text" id="sampler">
+            <label for="time">Waktu Pengujian:</label>
+            <input type="datetime-local" id="time">
+            <label for="v1">Nilai V1:</label>
+            <input type="number" id="v1">
+            <button type="button" onclick="calculateSO2()">Hitung</button>
+        </form>
+        <div id="result"></div>
+        <button onclick="location.href='results.html'">Lihat Hasil</button>
     </div>
-    <form id="attendanceForm">
-        <label for="date">Tanggal:</label>
-        <input type="date" id="date" name="date" readonly>
-        
-        <label for="name">Nama:</label>
-        <input type="text" id="name" name="name" required>
-        
-        <label for="id">Nomor ID:</label>
-        <input type="text" id="id" name="id" required>
-        
-        <label for="work">Jam Kerja / Keterangan:</label>
-        <div class="radio-group" id="work">
-            <label><input type="radio" name="work" value="siang" required> Shift Pagi</label>
-            <label><input type="radio" name="work" value="malam" required> Shift Malam</label>
-            <label><input type="radio" name="work" value="Off" required> Off</label>
-            <label><input type="radio" name="work" value="Sakit" required> Sakit</label>
-            <label><input type="radio" name="work" value="Izin" required> Izin</label>
-            <label><input type="radio" name="work" value="Cuti" required> Cuti</label>
-        </div>
-        
-        <div class="button-container">
-            <button type="submit">Submit</button>
-            <button type="button" onclick="verifyCode()">Lihat Hasil (Admin)</button>
-<button type="button" class="btn-secondary" onclick="window.location.href='resultsOpt.html'">Lihat Hasil (Opt)</button>
-        </div>
-    </form>
-    <div class="admin-notice">
-        Note: Untuk kerja Shift Siang dan Malam hanya bisa submit jika sudah di lokasi Acid/Cloride plant. Hasil absen sudah bisa dilihat oleh operator 
-    </div>
-</div>
-
-<div id="popup" class="popup">
-    <p id="popupMessage">Sedang memproses...</p>
-</div>
-
-<footer>
-    <p>&copy; 2024 Absensi</p>
-</footer>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBVCXqlS_EmR94n5CyN4N2BC-kgJb6Xac4",
-        authDomain: "absenacid.firebaseapp.com",
-        databaseURL: "https://absenacid-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "absenacid",
-        storageBucket: "absenacid.appspot.com",
-        messagingSenderId: "69425925570",
-        appId: "1:69425925570:web:3cc94c0dff5aad08bcda5b"
-    };
     
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+        import { getDatabase, ref, set, push, get } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 
-    function toTitleCase(str) {
-        return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-    }
-    
-    const allowedLocation = {
-        latitude: -2.8559667,
-        longitude: 122.1763768
-    };
-    
-    const attendanceForm = document.getElementById('attendanceForm');
-    const popup = document.getElementById('popup');
-    const popupMessage = document.getElementById('popupMessage');
-    const dateInput = document.getElementById('date');
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwcwcIdTSPUadytFCh8RqBM8zCVtXEo-I",
+            authDomain: "dataso2-id.firebaseapp.com",
+            databaseURL: "https://dataso2-id-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "dataso2-id",
+            storageBucket: "dataso2-id.appspot.com",
+            messagingSenderId: "1084913028872",
+            appId: "1:1084913028872:web:d3588f12dcbeed0cec26bd"
+        };
 
-    // Set tanggal otomatis saat halaman dimuat
-    // Fungsi untuk mendapatkan tanggal dengan zona waktu lokal
-function getLocalDate(offsetHours = 0) {
-    const localDate = new Date(new Date().getTime() + (offsetHours * 60 * 60 * 1000));
-    return localDate.toISOString().split('T')[0];
-}
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const constantsRef = ref(database, 'constants');
 
-// Mengatur offset waktu Indonesia Tengah (WITA) adalah UTC+8
-const indonesiaTimeOffset = 8;
-const today = getLocalDate(indonesiaTimeOffset);
-document.addEventListener("DOMContentLoaded", function() {
-    const dateInput = document.querySelector('input[type="date"]');
-    if (dateInput) {
-        dateInput.value = today;
-    }
-});
+        window.constants = {
+            c: 0.10282,
+            v: 10,
+            pt: 0.884.toFixed(3) // Pt ditampilkan dengan 3 angka di belakang koma
+        };
 
-    attendanceForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        popup.classList.add('active');
-        popupMessage.textContent = 'Sedang memproses...';
+        window.saveConstants = function() {
+            constants.c = parseFloat(document.getElementById('c').value);
+            constants.v = parseFloat(document.getElementById('v').value);
+            constants.pt = parseFloat(document.getElementById('temperature').value).toFixed(3); // Memastikan Pt menampilkan 3 angka di belakang koma
 
-        const date = dateInput.value;
-        let name = document.getElementById('name').value;
-        name = toTitleCase(name);
-        const id = document.getElementById('id').value;
-        const work = document.querySelector('input[name="work"]:checked').value;
+            set(constantsRef, constants)
+                .then(() => {
+                    alert('Konstanta berhasil disimpan');
+                })
+                .catch((error) => {
+                    console.error("Error saving constants: ", error);
+                    alert("Terjadi kesalahan saat menyimpan data.");
+                });
+        }
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const userLocation = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                };
-                const distance = getDistance(userLocation, allowedLocation);
+        window.calculateSO2 = function() {
+            const location = document.getElementById('location').value;
+            const time = document.getElementById('time').value;
+            const sampler = document.getElementById('sampler').value;
+            const v1 = parseFloat(document.getElementById('v1').value);
 
-                if ((work === 'siang' || work === 'malam') && distance > 600) {
-                    popupMessage.textContent = 'Anda tidak berada di lokasi Acid Plant.';
-                } else {
-                    submitAttendance({ date, name, id, work });
+            if (time && !isNaN(v1)) {
+                const so2 = (constants.c * constants.v * 10.945) / (constants.pt * v1 + (constants.c * constants.v * 10.945)) * 100;
+
+                const newEntry = push(ref(database, 'so2-data'));
+                set(newEntry, {
+                    location: location,
+                    time: time,
+                    v1: v1,
+                    c: constants.c,
+                    sampler:sampler,
+                    pt: constants.pt,
+                    so2: so2
+                })
+                .then(() => {
+                    document.getElementById('result').innerHTML = `Hasil Kadar SO2: ${so2.toFixed(2)}`;
+                })
+               .catch((error) => {
+                        console.error("Error writing to database: ", error);
+                        alert("Terjadi kesalahan saat menyimpan data.");
+                    });
+            } else {
+                alert('Harap isi semua data dengan benar');
+            }
+        }
+
+        function loadConstants() {
+            get(constantsRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    constants.c = data.c || constants.c;
+                    constants.v = data.v || constants.v;
+                    constants.pt = data.pt || constants.pt;
+
+                    document.getElementById('c').value = constants.c;
+                    document.getElementById('v').value = constants.v;
+                    document.getElementById('temperature').value = parseFloat(constants.pt).toFixed(3); // Memastikan Pt ditampilkan dengan 3 angka di belakang koma
                 }
-                setTimeout(() => popup.classList.remove('active'), 3000);
-            }, handleLocationError);
-        } else {
-            popupMessage.textContent = 'Layanan lokasi tidak didukung oleh browser ini.';
-            setTimeout(() => popup.classList.remove('active'), 3000);
-        }
-    });
-
-    function submitAttendance(data) {
-        push(ref(db, 'attendance/'), data)
-            .then(() => {
-                popupMessage.textContent = 'Data berhasil disimpan!';
-                attendanceForm.reset();
-            })
-            .catch((error) => {
-                console.error('Error writing new attendance to Firebase Database', error);
-                popupMessage.textContent = 'Terjadi kesalahan dalam menyimpan data.';
-            })
-            .finally(() => {
-                setTimeout(() => popup.classList.remove('active'), 3000);
+            }).catch((error) => {
+                console.error("Error loading constants: ", error);
             });
-    }
-
-    function getDistance(location1, location2) {
-        const R = 6371e3; // meters
-        const φ1 = location1.latitude * Math.PI / 180;
-        const φ2 = location2.latitude * Math.PI / 180;
-        const Δφ = (location2.latitude - location1.latitude) * Math.PI / 180;
-        const Δλ = (location2.longitude - location1.longitude) * Math.PI / 180;
-
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c; // in meters
-    }
-
-    function handleLocationError(error) {
-        let errorMessage = 'Tidak dapat memperoleh lokasi Anda.';
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                errorMessage = 'Pengguna menolak permintaan layanan lokasi. Silakan izinkan layanan lokasi pada pengaturan browser Anda.';
-                break;
-            case error.POSITION_UNAVAILABLE:
-                errorMessage = 'Informasi lokasi tidak tersedia.';
-                break;
-            case error.TIMEOUT:
-                errorMessage = 'Permintaan lokasi melampaui batas waktu.';
-                break;
-            case error.UNKNOWN_ERROR:
-                errorMessage = 'Terjadi kesalahan yang tidak diketahui.';
-                break;
         }
-        popupMessage.textContent = errorMessage;
-        setTimeout(() => popup.classList.remove('active'), 3000);
-    }
-    
-    window.verifyCode = function() {
-        const code = prompt('Halaman ini hanya boleh diakses oleh admin untuk keperluan rekapitulasi timesheet. Masukkan kode verifikasi:');
-        const correctCode = '0000';  // Ubah kode ini sesuai dengan keperluan
 
-        if (code === correctCode) {
-            window.location.href = 'results.html';
-        } else {
-            alert('Kode verifikasi salah!');
-        }
-    }
-</script>
-
+        // Load constants when the page loads
+        window.onload = loadConstants;
+    </script>
 </body>
 </html>
