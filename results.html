@@ -184,7 +184,7 @@
         });
     };
 
-    const loadAttendanceDataByDate = (selectedDate) => {
+const loadAttendanceDataByDate = (selectedDate) => {
     onValue(ref(db, 'attendance/'), (snapshot) => {
         tablesContainer.innerHTML = '';
         const dataSiang = {};
@@ -193,6 +193,12 @@
         snapshot.forEach((childSnapshot) => {
             const data = childSnapshot.val();
             const dateObj = new Date(data.date);
+
+            if (isNaN(dateObj.getTime())) {
+                console.error(`Invalid date found: ${data.date}`);
+                return;  // Skip this entry if the date is invalid
+            }
+
             const dataDate = dateObj.toISOString().split('T')[0];
             const dataName = toTitleCase(data.name.trim());
 
