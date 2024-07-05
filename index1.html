@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Absensi</title>
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Absensi Acid Plant</h1>
+    </header>
+    <div class="admin-perhatian">
+        PERHATIAN: JANGAN LUPA MENGAKTIFKAN LAYANAN LOKASI UNTUK BROWSER BAIK PADA PERANGKAT ANDROID ATAU IPHONE.
+    </div>
+    <form id="attendanceForm">
+        <label for="date">Tanggal:</label>
+        <input type="date" id="date" name="date" required>
+        
+        <label for="name">Nama:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="id">Nomor ID:</label>
+        <input type="text" id="id" name="id" required>
+        
+        <label for="work">Jam Kerja / Keterangan:</label>
+        <div class="radio-group" id="work">
+            <label><input type="radio" name="work" value="siang" required> Shift Siang</label>
+            <label><input type="radio" name="work" value="malam" required> Shift Malam</label>
+            <label><input type="radio" name="work" value="Off" required> Off</label>
+            <label><input type="radio" name="work" value="Sakit" required> Sakit</label>
+            <label><input type="radio" name="work" value="Izin" required> Izin</label>
+            <label><input type="radio" name="work" value="Cuti" required> Cuti</label>
+        </div>
+        
+        <div class="button-container">
+            <button type="submit">Submit</button>
+            <button type="button" onclick="verifyCode()">Lihat Hasil (Admin)</button>
+<button type="button" class="btn-secondary" onclick="window.location.href='resultsOpt.html'">Lihat Hasil (Opt)</button>
+        </div>
+    </form>
+    <div class="admin-notice">
+        Note: Untuk kerja Shift Siang dan Malam hanya bisa submit jika sudah di lokasi Acid/Cloride plant. 
+    </div>
+</div>
+
+<div id="popup" class="popup">
+    <p id="popupMessage">Sedang memproses...</p>
+</div>
+
+<footer>
+    <p>&copy; 2024 Absensi</p>
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBVCXqlS_EmR94n5CyN4N2BC-kgJb6Xac4",
+        authDomain: "absenacid.firebaseapp.com",
+        databaseURL: "https://absenacid-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "absenacid",
+        storageBucket: "absenacid.appspot.com",
+        messagingSenderId: "69425925570",
+        appId: "1:69425925570:web:3cc94c0dff5aad08bcda5b"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function toTitleCase(str) {
+        return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
+    
+    const allowedLocation = {
+        latitude: -2.8559667,
+        longitude: 122.1763768
+    };
+    
+    const attendanceForm = document.getElementById('attendanceForm');
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popupMessage');
+    const dateInput = document.getElementById('date');
+
+    // Set tanggal otomatis saat halaman dimuat
+    // Fungsi untuk mendapatkan tanggal dengan zona waktu lokal
+function getLocalDate(offsetHours = 0) {
+    const localDate = new Date(new Date().getTime() + (offsetHours * 60 * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+}
+
+// Mengatur offset waktu Indonesia Tengah (WITA) adalah UTC+8
+const indonesiaTimeOffset = 8;
+const today = getLocalDate(indonesiaTimeOffset);
+document.addEventListener("DOMContentLoaded", function() {
+    const dateInput = document.querySelector('input[type="date"]');
+    if (dateInput) {
+        dateInput.value = today;
+    }
+});
+
+    attendanceForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        popup.classList.add('active');
+        popupMessage.textContent = 'Sedang memproses...';
+
+        const date = dateInput.value;
+        let name = document.getElementById('name').value;
+        name = toTitleCase(name);
+        const id = document.getElementById('id').value;
+        const work = document.querySelector('input[name="work"]:checked').value;
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const userLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                const distance = getDistance(userLocation, allowedLocation);
+
+                if ((work === 'siang' || work === 'malam') && distance > 600) {
+                    popupMessage.textContent = 'Anda tidak berada di lokasi Acid Plant.';
+                } else {
+                    submitAttendance({ date, name, id, work });
+                }
+                setTimeout(() => popup.classList.remove('active'), 3000);
+            }, handleLocationError);
+        } else {
+            popupMessage.textContent = 'Layanan lokasi tidak didukung oleh browser ini.';
+            setTimeout(() => popup.classList.remove('active'), 3000);
+        }
+    });
+
+    function submitAttendance(data) {
+        push(ref(db, 'attendance/'), data)
+            .then(() => {
+                popupMessage.textContent = 'Data berhasil disimpan!';
+                attendanceForm.reset();
+            })
+            .catch((error) => {
+                console.error('Error writing new attendance to Firebase Database', error);
+                popupMessage.textContent = 'Terjadi kesalahan dalam menyimpan data.';
+            })
+            .finally(() => {
+                setTimeout(() => popup.classList.remove('active'), 3000);
+            });
+    }
+
+    function getDistance(location1, location2) {
+        const R = 6371e3; // meters
+        const φ1 = location1.latitude * Math.PI / 180;
+        const φ2 = location2.latitude * Math.PI / 180;
+        const Δφ = (location2.latitude - location1.latitude) * Math.PI / 180;
+        const Δλ = (location2.longitude - location1.longitude) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // in meters
+    }
+
+    function handleLocationError(error) {
+        let errorMessage = 'Tidak dapat memperoleh lokasi Anda.';
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'Pengguna menolak permintaan layanan lokasi. Silakan izinkan layanan lokasi pada pengaturan browser Anda.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Informasi lokasi tidak tersedia.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'Permintaan lokasi melampaui batas waktu.';
+                break;
+            case error.UNKNOWN_ERROR:
+                errorMessage = 'Terjadi kesalahan yang tidak diketahui.';
+                break;
+        }
+        popupMessage.textContent = errorMessage;
+        setTimeout(() => popup.classList.remove('active'), 3000);
+    }
+    
+    window.verifyCode = function() {
+        const code = prompt('Halaman ini hanya boleh diakses oleh admin untuk keperluan rekapitulasi timesheet. Masukkan kode verifikasi:');
+        const correctCode = '0000';  // Ubah kode ini sesuai dengan keperluan
+
+        if (code === correctCode) {
+            window.location.href = 'results.html';
+        } else {
+            alert('Kode verifikasi salah!');
+        }
+    }
+</script>
+
+</body>
+</html>
