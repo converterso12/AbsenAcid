@@ -234,8 +234,8 @@ const loadAttendanceDataByDate = (selectedDate) => {
                     </thead>
                     <tbody>
                         ${Object.values(shiftData).map((data, index) => {
-                            const startHour = shiftName === 'Siang' ? '5' : '17';
-                            const finishHour = shiftName === 'Siang' ? '17' : '5';
+                            const startHour = shiftName === 'Siang' ? '7' : '19';
+                            const finishHour = shiftName === 'Siang' ? '19' : '7';
                             const workHours = 11;
                             const overtime = workHours - 8;
                             const dateObj = new Date(selectedDate);
